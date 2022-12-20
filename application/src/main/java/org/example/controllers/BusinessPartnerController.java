@@ -13,7 +13,6 @@ import java.util.UUID;
 import com.sap.cloud.sdk.cloudplatform.connectivity.DestinationAccessor;
 import com.sap.cloud.sdk.cloudplatform.connectivity.HttpDestination;
 import com.sap.cloud.sdk.cloudplatform.requestheader.RequestHeaderAccessor;
-import com.sap.cloud.sdk.odatav2.connectivity.ODataException;
 
 import com.sap.cloud.sdk.s4hana.datamodel.odata.namespaces.businesspartner.BusinessPartner;
 import com.sap.cloud.sdk.s4hana.datamodel.odata.namespaces.businesspartner.BusinessPartnerAddress;
@@ -28,9 +27,7 @@ public class BusinessPartnerController {
     public List<BusinessPartnerAddress> getBusinessPartnerAddresses(
         @RequestParam String destinationName,
         @RequestParam UUID partnerId
-    )
-        throws ODataException
-    {
+    ) {
         HttpDestination destination = DestinationAccessor.getDestination(destinationName).asHttp();
 
         List<BusinessPartner> matchingPartners = service
