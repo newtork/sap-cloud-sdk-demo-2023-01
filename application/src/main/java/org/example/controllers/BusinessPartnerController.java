@@ -4,13 +4,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import com.sap.cloud.sdk.cloudplatform.connectivity.DestinationAccessor;
 import com.sap.cloud.sdk.cloudplatform.connectivity.HttpDestination;
-import com.sap.cloud.sdk.cloudplatform.servlet.RequestAccessor;
+import com.sap.cloud.sdk.cloudplatform.requestheader.RequestHeaderAccessor;
 import com.sap.cloud.sdk.odatav2.connectivity.ODataException;
 
 import com.sap.cloud.sdk.s4hana.datamodel.odata.namespaces.businesspartner.BusinessPartner;
@@ -23,66 +25,60 @@ public class BusinessPartnerController {
     private final BusinessPartnerService service = new DefaultBusinessPartnerService();
 
     @GetMapping("/bupa/addresses")
-    public List<BusinessPartnerAddress> getBusinessPartnerAddresses(@RequestParam String destinationName, @RequestParam
-    UUID partnerId) {
+    public List<BusinessPartnerAddress> getBusinessPartnerAddresses(
+        @RequestParam String destinationName,
+        @RequestParam UUID partnerId
+    )
+        throws ODataException
+    {
         HttpDestination destination = DestinationAccessor.getDestination(destinationName).asHttp();
 
-        List<BusinessPartner> matchingPartners = fetchPartnersWithId(partnerId, destination);
+        List<BusinessPartner> matchingPartners = service
+            .getAllBusinessPartner()
+            .filter(BusinessPartner.BUSINESS_PARTNER_UUID.eq(partnerId))
+            .top(1)
+            .executeRequest(destination);
 
-        if (matchingPartners.isEmpty()) {
-            return Collections.emptyList();
+        List<BusinessPartnerAddress> result = new ArrayList<>();
+        for( BusinessPartner bp : matchingPartners ) {
+            result.addAll(bp.getBusinessPartnerAddressOrFetch());
         }
-
-        if (matchingPartners.size() > 1) {
-            throw new IllegalStateException("More than one business partner found.");
-        }
-
-        try {
-            return matchingPartners.get(0).getBusinessPartnerAddressOrFetch();
-        } catch (ODataException e) {
-            throw new IllegalStateException("Unable to fetch business partner addresses.", e);
-        }
+        return result;
     }
 
+    @SuppressWarnings( "UnstableApiUsage" )
     @GetMapping("/bupa/speaksMyLanguage")
-    public boolean getBusinessPartnerSpeaksMyLanguage(@RequestParam String destinationName, @RequestParam UUID partnerId) {
+    public boolean getBusinessPartnerSpeaksMyLanguage(
+        @RequestParam String destinationName,
+        @RequestParam UUID partnerId
+    ) {
         HttpDestination destination = DestinationAccessor.getDestination(destinationName).asHttp();
 
-        List<BusinessPartner> matchingPartners = fetchPartnersWithId(partnerId, destination);
+        List<BusinessPartner> matchingPartners = service
+            .getAllBusinessPartner()
+            .filter(BusinessPartner.BUSINESS_PARTNER_UUID.eq(partnerId))
+            .top(1)
+            .executeRequest(destination);
 
-        if (matchingPartners.isEmpty()) {
+        if(matchingPartners.isEmpty()) {
             return false;
         }
 
-        if (matchingPartners.size() > 1) {
-            throw new IllegalStateException("More than one business partner found.");
-        }
-
-        return businessPartnerSpeaksMyLanguage(matchingPartners.get(0));
-    }
-
-    private List fetchPartnersWithId(UUID partnerId, HttpDestination destination) {
-        try {
-            return service
-                .getAllBusinessPartner()
-                .filter(BusinessPartner.BUSINESS_PARTNER_UUID.eq(partnerId))
-                .execute(destination);
-        } catch ( ODataException e) {
-            throw new IllegalStateException("Unable to fetch business partners.", e);
-        }
-    }
-
-    private boolean businessPartnerSpeaksMyLanguage(BusinessPartner partner) {
-        String correspondenceLanguage = partner.getCorrespondenceLanguage();
-
-        return RequestAccessor
-            .tryGetCurrentRequest()
-            .map(request -> request.getHeaders("Accept-Language"))
-            .map(values -> (List<String>) Collections.list(values))
+        Collection<String> myLanguages = RequestHeaderAccessor.tryGetHeaderContainer()
+            .map(headers -> headers.getHeaderValues("Accept-Language"))
             .filter(values -> !values.isEmpty())
-            .getOrElse(Collections.singletonList("en"))
-            .stream()
-            .anyMatch(language -> language.equals("*")
-                || language.substring(0, 2).equalsIgnoreCase(correspondenceLanguage));
+            .getOrElse(Collections.singletonList("en"));
+
+        for( String lang : myLanguages ) {
+            if(lang.equals("*")) {
+                return true;
+            }
+            for( final BusinessPartner partner : matchingPartners ) {
+                if(lang.substring(0, 2).equals(partner.getCorrespondenceLanguage())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

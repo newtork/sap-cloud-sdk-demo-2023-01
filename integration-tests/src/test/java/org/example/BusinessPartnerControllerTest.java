@@ -2,28 +2,34 @@ package org.example;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.io.Resources;
+import com.google.gson.Gson;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import com.sap.cloud.sdk.cloudplatform.connectivity.DefaultDestinationLoader;
 import com.sap.cloud.sdk.cloudplatform.connectivity.DefaultHttpDestination;
 import com.sap.cloud.sdk.cloudplatform.connectivity.DestinationAccessor;
 
+import com.sap.cloud.sdk.s4hana.datamodel.odata.namespaces.businesspartner.BusinessPartner;
+import com.sap.cloud.sdk.s4hana.datamodel.odata.namespaces.businesspartner.BusinessPartnerAddress;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.hamcrest.Matchers.is;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith( SpringRunner.class)
@@ -42,20 +48,20 @@ public class BusinessPartnerControllerTest {
     @Test
     public void testGetBusinessPartnerAddresses() throws Exception {
         mockDestination();
-        mockMetadataLookUp();
         mockBusinessPartnerLookUp();
         mockAddressesLookUp();
 
         mvc.perform(MockMvcRequestBuilders.get("/bupa/addresses")
                 .queryParam("destinationName", DESTINATION_NAME)
                 .queryParam("partnerId", BUSINESS_PARTNER_ID.toString()))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$[0].Country", is("Legoland")));
     }
 
     @Test
     public void testGetBusinessPartnerSpeaksMyLanguage() throws Exception {
         mockDestination();
-        mockMetadataLookUp();
         mockBusinessPartnerLookUp();
 
         mvc.perform(MockMvcRequestBuilders.get("/bupa/speaksMyLanguage")
@@ -64,40 +70,30 @@ public class BusinessPartnerControllerTest {
             .header("Accept-Language", "de-DE")).andExpect(status().isOk());
     }
 
+    @SuppressWarnings( "UnstableApiUsage" )
     private void mockDestination() {
-        final DefaultDestinationLoader customLoader = new DefaultDestinationLoader()
-            .registerDestination(DefaultHttpDestination.builder(BACKEND_SYSTEM.baseUrl()).name(DESTINATION_NAME).build());
-        DestinationAccessor.prependDestinationLoader(customLoader);
+        final DefaultHttpDestination destination =
+            DefaultHttpDestination.builder(BACKEND_SYSTEM.baseUrl()).name(DESTINATION_NAME).build();
+        DestinationAccessor.prependDestinationLoader(new DefaultDestinationLoader().registerDestination(destination));
     }
 
-    private void mockMetadataLookUp() throws IOException
-    {
-        String metadata = readResourceFile("service.edmx");
-
-        BACKEND_SYSTEM
-            .stubFor(get(urlMatching("/.*API_BUSINESS_PARTNER/\\$metadata"))
-                .willReturn(aResponse().withBody(metadata)));
-    }
-
-    private void mockBusinessPartnerLookUp() throws IOException {
-        String singleBusinessPartner = readResourceFile("single-business-partner.json");
+    private void mockBusinessPartnerLookUp() {
+        final BusinessPartner bp = new BusinessPartner();
+        bp.setBusinessPartner("0001");
+        bp.setBusinessPartnerUUID(BUSINESS_PARTNER_ID);
+        String bpJson = "{\"d\":{\"results\":["+new Gson().toJson(bp)+"]}}";
 
         BACKEND_SYSTEM
             .stubFor(get(urlMatching("/.*A_BusinessPartner\\?\\$filter.*"))
-                .willReturn(aResponse().withBody(singleBusinessPartner)));
+                .willReturn(aResponse().withBody(bpJson)));
     }
 
-    private void mockAddressesLookUp() throws IOException {
-        String businessPartnerAddresses = readResourceFile("business-partner-address.json");
+    private void mockAddressesLookUp() {
+        BusinessPartnerAddress addr = BusinessPartnerAddress.builder().addressID("123").country("Legoland").build();
+        String addrJson = "{\"d\":{\"results\":["+new Gson().toJson(addr)+"]}}";
 
         BACKEND_SYSTEM
             .stubFor(get(urlMatching("/.*to_BusinessPartnerAddress.*"))
-                .willReturn(aResponse().withBody(businessPartnerAddresses)));
-    }
-
-    private static String readResourceFile(String fileName) throws IOException {
-        return Resources.toString(
-            Resources.getResource("BusinessPartnerControllerTest/" + fileName),
-            StandardCharsets.UTF_8);
+                .willReturn(aResponse().withBody(addrJson)));
     }
 }
