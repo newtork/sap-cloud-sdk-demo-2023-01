@@ -7,8 +7,11 @@
 Spring Boot application to call an SAP S/4HANA OData endpoint.
 
 Concrete benefits of Cloud SDK:
-* Hide complexity of establishing connectvity and inter-service communication
-  * SAP BTP services being used implicitly: _Authentication and Authorization Service_ (XSUAA),  _Destination Service_, _Connectivity Service_
+* Hide complexity of establishing connectvity and SAP BTP service communication:
+  * _Authentication and Authorization Service_ (XSUAA)
+  * _Identity Service_
+  * _Destination Service_
+  * _Connectivity Service_
 
 
 
