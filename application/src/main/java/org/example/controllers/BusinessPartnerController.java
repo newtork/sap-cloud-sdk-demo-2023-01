@@ -36,10 +36,10 @@ public class BusinessPartnerController {
             .top(100)
             .executeRequest(destination);
 
-        List<BusinessPartnerAddress> result = new ArrayList<>();
+        List<BusinessPartnerAddress> addresses = new ArrayList<>();
         for( BusinessPartner bp : matchingPartners ) {
-            result.addAll(bp.getBusinessPartnerAddressOrFetch());
+            addresses.addAll(bp.getBusinessPartnerAddressOrFetch());
         }
-        return result;
+        return addresses;
     }
 }
