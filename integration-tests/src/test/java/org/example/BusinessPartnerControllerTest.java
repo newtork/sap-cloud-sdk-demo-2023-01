@@ -55,7 +55,6 @@ public class BusinessPartnerControllerTest {
             .andExpect(jsonPath("$[0].Country", is("Fantasyland")));
     }
 
-    @SuppressWarnings( "UnstableApiUsage" )
     private void mockDestination() {
         DefaultHttpDestination destination =
             DefaultHttpDestination.builder(BACKEND_SYSTEM.baseUrl()).name(DESTINATION_NAME).build();

@@ -12,7 +12,6 @@ import com.sap.cloud.sdk.cloudplatform.connectivity.DefaultDestinationLoader;
 import com.sap.cloud.sdk.cloudplatform.connectivity.DefaultHttpDestination;
 import com.sap.cloud.sdk.cloudplatform.connectivity.DestinationAccessor;
 import com.sap.cloud.sdk.cloudplatform.connectivity.HttpDestination;
-import com.sap.cloud.sdk.odatav2.connectivity.ODataException;
 
 import com.sap.cloud.sdk.s4hana.datamodel.odata.namespaces.businesspartner.BusinessPartner;
 import com.sap.cloud.sdk.s4hana.datamodel.odata.namespaces.businesspartner.BusinessPartnerAddress;
@@ -40,9 +39,7 @@ public class BusinessPartnerControllerTest
     }
 
     @Test
-    public void test()
-        throws ODataException
-    {
+    public void test() {
         BusinessPartnerController controller = new BusinessPartnerController();
 
         // test data
