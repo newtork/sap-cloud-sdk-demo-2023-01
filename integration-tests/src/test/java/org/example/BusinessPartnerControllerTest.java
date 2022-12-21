@@ -63,10 +63,9 @@ public class BusinessPartnerControllerTest {
     }
 
     private void mockBusinessPartnerLookUp() {
-        BusinessPartner bp = new BusinessPartner();
-        bp.setBusinessPartner("0001");
-        bp.addBusinessPartnerAddress(BusinessPartnerAddress.builder().addressID("1").country("Fantasyland").build());
-        String bpJson = "{\"d\":{\"results\":["+new Gson().toJson(bp)+"]}}";
+        BusinessPartnerAddress address = BusinessPartnerAddress.builder().addressID("1").country("Fantasyland").build();
+        BusinessPartner businessPartner = BusinessPartner.builder().businessPartnerAddress(address).build();
+        String bpJson = "{\"d\":{\"results\":["+new Gson().toJson(businessPartner)+"]}}";
 
         BACKEND_SYSTEM.stubFor(get(urlMatching("/.*A_BusinessPartner.*")).willReturn(aResponse().withBody(bpJson)));
     }
