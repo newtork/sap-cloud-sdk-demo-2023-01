@@ -8,8 +8,8 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan({"org.example"})
-@ServletComponentScan({"org.example"})
+@ComponentScan({"com.sap.cloud.sdk", "org.example"})
+@ServletComponentScan({"com.sap.cloud.sdk", "org.example"})
 public class Application extends SpringBootServletInitializer
 {
     @Override
