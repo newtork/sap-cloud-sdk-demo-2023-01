@@ -23,11 +23,3 @@ Concrete benefits of Cloud SDK:
   * Best practices applied from most recent v3 release.
 * [x] `main/v4` ([diff](https://github.com/newtork/sap-cloud-sdk-demo-2023-01/compare/main/v3...main/v4))
   * Migration to version v4
-
-
-## (Open)
-
-* Create vanilla sample code branch.
-* Motivate asynchronous task to propagate `ThreatContext`.
-* Motivate @Async method annotation.
-* Motivate @Header argument annotation.
