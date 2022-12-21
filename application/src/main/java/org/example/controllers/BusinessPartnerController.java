@@ -18,7 +18,7 @@ import com.sap.cloud.sdk.s4hana.datamodel.odata.services.DefaultBusinessPartnerS
 
 @RestController
 public class BusinessPartnerController {
-    private final BusinessPartnerService service = new DefaultBusinessPartnerService();
+    BusinessPartnerService service = new DefaultBusinessPartnerService();
 
     @GetMapping("/bupa/addresses")
     public List<BusinessPartnerAddress> getAddressesByLastName(
