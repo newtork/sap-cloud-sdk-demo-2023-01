@@ -93,7 +93,7 @@ public class BusinessPartnerController {
         List<Object> addresses = new ArrayList<>();
         List<?> businessPartners = (List<?>) (((Map<?,?>) odataResult.get("d")).get("results"));
         for( Object businessPartner : businessPartners ) {
-            addresses.add(((Map<?,?>) businessPartner).get("to_BusinessPartnerAddress"));
+            addresses.addAll((List<?>) ((Map<?,?>) businessPartner).get("to_BusinessPartnerAddress"));
         }
         return addresses;
     }
